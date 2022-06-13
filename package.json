@@ -16,9 +16,5 @@
   "bugs": {
     "url": "https://github.com/Mayesss/praxisprojekt/issues"
   },
-  "homepage": "https://github.com/Mayesss/praxisprojekt#readme",
-  "dependencies": {
-    "kissfft-js": "^0.1.8"
-  }
+  "homepage": "https://github.com/Mayesss/praxisprojekt#readme"
 }
-

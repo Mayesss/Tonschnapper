@@ -48,3 +48,4 @@ wie ist der klang eines Perkussionsinstrumentes?
 was w ̈unschen sich die Musiker? was sind die Bed ̈urfnisse der Musiker bei Instru-
 mente stimmen? (nach Transport, Luft-Feuchtigkeit und Temperatur ̈anderungen)
 
+

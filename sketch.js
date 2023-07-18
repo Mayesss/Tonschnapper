@@ -1,27 +1,31 @@
-var cnv;
-var btn;
-var analyser, audioContext;
-var autoCorrelateValue = -1;
-var freq_data = [0];
-var max_data = 100;
-var note = "";
-var previousValueToDisplay = 0;
-var smoothingCount = 0;
-var smoothingThreshold = 5;
-var smoothingCountThreshold = 5;
-var a4 = 440;
-var buf = new Float32Array(1024);
-var MIN_SAMPLES = 0;
-var GOOD_ENOUGH_CORRELATION = 0.9;
-var parameters = false;
-
+let cnv;
+let btn;
+let analyser, audioContext;
+let autoCorrelateValue = -1;
+let freq_data = [0];
+let max_data = 100;
+let note = "";
+let previousValueToDisplay = 0;
+let smoothingCount = 0;
+let smoothingThreshold = 5;
+let smoothingCountThreshold = 5;
+let a4 = 440;
+let buf = new Float32Array(1024);
+let MIN_SAMPLES = 0;
+let GOOD_ENOUGH_CORRELATION = 0.9;
+let parameters = false;
+let colorBigCercle 
+let colorMiddleCercle 
+let colorSmallCercle 
+let colorText 
+let colorTriangle
 function setup() {
   parametres();
-  cnv = createCanvas(600, 320);
-  var x = (windowWidth - width) / 2;
-  var y = 50;
+  cnv = createCanvas(windowWidth - 10, windowWidth / 2);
+  let x = (windowWidth - width) / 2;
+  let y = 50;
   cnv.position(x, y);
-  var source;
+  let source;
   audioContext = new (window.AudioContext || window.webkitAudioContext)();
   analyser = audioContext.createAnalyser();
   analyser.minDecibels = -100;
@@ -32,7 +36,7 @@ function setup() {
     alert("Sorry, getUserMedia is required for the app.");
     return;
   } else {
-    var constraints = { audio: true };
+    let constraints = { audio: true };
     navigator.mediaDevices
       .getUserMedia(constraints)
       .then(function (stream) {
@@ -47,36 +51,57 @@ function setup() {
       });
   }
 }
-function windowResized() {
-  resizeCanvas(windowWidth - 50, windowHeight - 20);
-  var x = (windowWidth - width) / 2;
-  var y = windowHeight + 150;
-  cnv.position(x, y);
-}
 
 function draw() {
-  background(255, 200, 255);
-  fill(0, 102, 153);
-  let x1 = width *0.43;
-  let y1 = height*0.01;
-  let x2 = width * 0.57;
-  let y2 = height *0.01;
-  let x3 = width *0.5;
-  let y3 = height *0.2;
+  background(255, 255, 255);
+   colorBigCercle = color(217,217,217)
+   colorMiddleCercle = color(217,217,217)
+   colorSmallCercle = color(217,217,217)
+
+   if(note == "--")colorText = color(217,217,217)
+   else colorText = color(0,0,0)
+   colorTriangle = color(217,217,217)
+  noStroke()
   
+  fill(colorText);
+  textSize(width * 0.26);
+  text(note, width * 0.415, height * 0.67);
+  fill(217,217,217);
+
+//triange
+  let x1 = width * 0.46;
+  let y1 = height * 0.01;
+  let x2 = width * 0.54;
+  let y2 = height * 0.01;
+  let x3 = width * 0.5;
+  let y3 = height * 0.14;
   triangle(x1, y1, x2, y2, x3, y3);
-  textSize(width*0.20);
-  text(note, width *0.44, height *0.650);
 
-  ellipse(width * 0.4, height * 0.15, width * 0.07)
-  ellipse(width * 0.3, height * 0.15, width * 0.07)
-  ellipse(width * 0.2, height * 0.15, width * 0.07)
-  ellipse(width * 0.1, height * 0.15, width * 0.07)
+ //linke Rheie
+let num = 1
+  ellipse(width * 0.514 - 40*num,(height * 0.11) + height * 0.02 * fibonacci(num++), width * 0.035 + fibonacci(num))
+  ellipse(width * 0.514 - 40*num,(height * 0.11) + height * 0.02 * fibonacci(num++), width * 0.035 + fibonacci(num))
+  ellipse(width * 0.514 - 40*num,(height * 0.11) + height * 0.02 * fibonacci(num++), width * 0.035 + fibonacci(num))
+  ellipse(width * 0.514 - 40*num,(height * 0.11) + height * 0.02 * fibonacci(num++), width * 0.035 + fibonacci(num))
+  ellipse(width * 0.514 - 40*num,(height * 0.11) + height * 0.02 * fibonacci(num++), width * 0.035 + fibonacci(num))
+  ellipse(width * 0.514 - 40*num,(height * 0.11) + height * 0.02 * fibonacci(num++), width * 0.035 + fibonacci(num))
+  ellipse(width * 0.514 - 40*num,(height * 0.11) + height * 0.02 * fibonacci(num++), width * 0.035 + fibonacci(num))
+  ellipse(width * 0.514 - 40*num,(height * 0.11) + height * 0.02 * fibonacci(num++), width * 0.035 + fibonacci(num))
+//rechte Rheie
 
+ellipse(width * 0.486 + 40*(--num),(height * 0.11) + height * 0.02 * fibonacci(num), width * 0.035 + fibonacci(num+1))
+ellipse(width * 0.486 + 40*(--num),(height * 0.11) + height * 0.02 * fibonacci(num), width * 0.035 + fibonacci(num+1))
+ellipse(width * 0.486 + 40*(--num),(height * 0.11) + height * 0.02 * fibonacci(num), width * 0.035 + fibonacci(num+1))
+ellipse(width * 0.486 + 40*(--num),(height * 0.11) + height * 0.02 * fibonacci(num), width * 0.035 + fibonacci(num+1))
+ellipse(width * 0.486 + 40*(--num),(height * 0.11) + height * 0.02 * fibonacci(num), width * 0.035 + fibonacci(num+1))
+ellipse(width * 0.486 + 40*(--num),(height * 0.11) + height * 0.02 * fibonacci(num), width * 0.035 + fibonacci(num+1))
+ellipse(width * 0.486 + 40*(--num),(height * 0.11) + height * 0.02 * fibonacci(num), width * 0.035 + fibonacci(num+1))
+ellipse(width * 0.486 + 40*(--num),(height * 0.11) + height * 0.02 * fibonacci(num), width * 0.035 + fibonacci(num+1))
 
   tune();
   if (autoCorrelateValue === -1) {
-    note = "-";
+    colorText=color(217,217,217)
+    note = "--";
     return;
   }
   change_ref(parseInt(ref.value()));
@@ -84,14 +109,15 @@ function draw() {
 
 function tune() {
   drawNoteVisual = requestAnimationFrame(tune);
-  var bufferLength = analyser.fftSize;
-  var buffer = new Float32Array(bufferLength);
+  let bufferLength = analyser.fftSize;
+  let buffer = new Float32Array(bufferLength);
   analyser.getFloatTimeDomainData(buffer);
-  var autoCorrelateValue = autoCorrelate(buffer, audioContext.sampleRate);
+  let autoCorrelateValue = autoCorrelate(buffer, audioContext.sampleRate);
   // Handle rounding
-  var valueToDisplay = autoCorrelateValue;
-  var smoothingThreshold = 10;
+  let valueToDisplay = autoCorrelateValue;
+  let smoothingThreshold = 10;
   if (autoCorrelateValue === -1) {
+    colorText=color(217,217,217)
     note = "--";
     return;
   }
@@ -125,8 +151,8 @@ function tune() {
   }
 }
 function noteFromPitch(freq) {
-  var noteNum = 12 * (Math.log(freq / a4) / Math.log(2));
-  var noteStrings = [
+  let noteNum = 12 * (Math.log(freq / a4) / Math.log(2));
+  let noteStrings = [
     "C",
     "C#",
     "D",
@@ -138,22 +164,22 @@ function noteFromPitch(freq) {
     "G#",
     "A",
     "A#",
-    "B",
+    "H",
   ];
   note = noteStrings[(Math.round(noteNum) + 69) % 12];
   return note;
 }
 
 function autoCorrelate(buf, sampleRate) {
-  var SIZE = buf.length;
-  var MAX_SAMPLES = Math.floor(SIZE / 2);
-  var best_offset = -1;
-  var best_correlation = 0;
-  var rms = 0;
-  var foundGoodCorrelation = false;
-  var correlations = new Array(MAX_SAMPLES);
-  for (var i = 0; i < SIZE; i++) {
-    var val = buf[i];
+  let SIZE = buf.length;
+  let MAX_SAMPLES = Math.floor(SIZE / 2);
+  let best_offset = -1;
+  let best_correlation = 0;
+  let rms = 0;
+  let foundGoodCorrelation = false;
+  let correlations = new Array(MAX_SAMPLES);
+  for (let i = 0; i < SIZE; i++) {
+    let val = buf[i];
     rms += val * val;
   }
   rms = Math.sqrt(rms / SIZE);
@@ -161,11 +187,11 @@ function autoCorrelate(buf, sampleRate) {
     // not enough signal
     return -1;
 
-  var lastCorrelation = 1;
-  for (var offset = MIN_SAMPLES; offset < MAX_SAMPLES; offset++) {
-    var correlation = 0;
+  let lastCorrelation = 1;
+  for (let offset = MIN_SAMPLES; offset < MAX_SAMPLES; offset++) {
+    let correlation = 0;
 
-    for (var i = 0; i < MAX_SAMPLES; i++) {
+    for (let i = 0; i < MAX_SAMPLES; i++) {
       correlation += Math.abs(buf[i] - buf[i + offset]);
     }
     correlation = 1 - correlation / MAX_SAMPLES;
@@ -189,7 +215,7 @@ function autoCorrelate(buf, sampleRate) {
       // we know best_offset >=1,
       // since foundGoodCorrelation cannot go to true until the second pass (offset=1), and
       // we can't drop into this clause until the following pass (else if).
-      var shift =
+      let shift =
         (correlations[best_offset + 1] - correlations[best_offset - 1]) /
         correlations[best_offset];
       return sampleRate / (best_offset + 8 * shift);
@@ -202,7 +228,7 @@ function autoCorrelate(buf, sampleRate) {
   }
 
   return -1;
-  //	var best_frequency = sampleRate/best_offset;
+  //	let best_frequency = sampleRate/best_offset;
 }
 
 function change_ref(v) {
@@ -224,4 +250,10 @@ function parametres() {
     //ref.mouseOut(change_ref(parseInt(ref.value())));
     parameters = true;
   }
+}
+function fibonacci(n) {
+  if (n === 0) return 0;
+  if (n === 1) return 1;
+  // recursioin base
+  return fibonacci(n - 2) + fibonacci(n - 1);
 }

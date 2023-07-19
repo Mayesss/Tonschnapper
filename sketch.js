@@ -19,9 +19,23 @@ let colorMiddleCercle
 let colorSmallCercle 
 let colorText 
 let colorTriangle
+let accuracy 
+let cents = 0
+let cnvWidth = 0
+let cnvHeight = 0
+let cnvRtaio = 3
+let diff = -999
 function setup() {
   parametres();
-  cnv = createCanvas(windowWidth - 10, windowWidth / 2);
+  if(windowWidth > windowHeight){
+  cnvWidth = windowWidth * 0.98
+  cnvHeight = cnvWidth / cnvRtaio
+  }
+  else{
+  cnvWidth = windowWidth *0.98
+  cnvHeight = windowWidth / cnvRtaio
+  }
+  cnv = createCanvas(cnvWidth, cnvHeight);
   let x = (windowWidth - width) / 2;
   let y = 50;
   cnv.position(x, y);
@@ -65,9 +79,10 @@ function draw() {
   
   fill(colorText);
   textSize(width * 0.26);
-  text(note, width * 0.415, height * 0.67);
+  text(note, width * 0.415, height * 0.79);
   fill(217,217,217);
-
+  if(diff <5 && diff > -5)
+  fill(35,135,36)//grün
 //triange
   let x1 = width * 0.46;
   let y1 = height * 0.01;
@@ -76,32 +91,49 @@ function draw() {
   let x3 = width * 0.5;
   let y3 = height * 0.14;
   triangle(x1, y1, x2, y2, x3, y3);
-
  //linke Rheie
 let num = 1
-  ellipse(width * 0.514 - 40*num,(height * 0.11) + height * 0.02 * fibonacci(num++), width * 0.035 + fibonacci(num))
-  ellipse(width * 0.514 - 40*num,(height * 0.11) + height * 0.02 * fibonacci(num++), width * 0.035 + fibonacci(num))
-  ellipse(width * 0.514 - 40*num,(height * 0.11) + height * 0.02 * fibonacci(num++), width * 0.035 + fibonacci(num))
-  ellipse(width * 0.514 - 40*num,(height * 0.11) + height * 0.02 * fibonacci(num++), width * 0.035 + fibonacci(num))
-  ellipse(width * 0.514 - 40*num,(height * 0.11) + height * 0.02 * fibonacci(num++), width * 0.035 + fibonacci(num))
-  ellipse(width * 0.514 - 40*num,(height * 0.11) + height * 0.02 * fibonacci(num++), width * 0.035 + fibonacci(num))
-  ellipse(width * 0.514 - 40*num,(height * 0.11) + height * 0.02 * fibonacci(num++), width * 0.035 + fibonacci(num))
-  ellipse(width * 0.514 - 40*num,(height * 0.11) + height * 0.02 * fibonacci(num++), width * 0.035 + fibonacci(num))
+if( diff >= -5)fill(35,135,36)//grün
+  ellipse(width * 0.514 - (width / 20 *(num)),(height * 0.11) + height * 0.02 * fibonacci(num++), width * 0.035 + fibonacci(num))
+  if( diff > -10)fill(35,135,36)//grün
+  ellipse(width * 0.514 - (width / 20 *(num)),(height * 0.11) + height * 0.02 * fibonacci(num++), width * 0.035 + fibonacci(num))
+  if(diff > -15)fill(255,190,0)//Gelb
+  ellipse(width * 0.514 - (width / 20 *(num)),(height * 0.11) + height * 0.02 * fibonacci(num++), width * 0.035 + fibonacci(num))
+  if(diff > -20)fill(255,190,0)//Gelb
+  ellipse(width * 0.514 - (width / 20 *(num)),(height * 0.11) + height * 0.02 * fibonacci(num++), width * 0.035 + fibonacci(num))
+  if( diff > -25)fill(255,190,0)//Gelb
+  ellipse(width * 0.514 - (width / 20 *(num)),(height * 0.11) + height * 0.02 * fibonacci(num++), width * 0.035 + fibonacci(num))
+  if( diff > -30)fill(210,34,34)//Rot
+  ellipse(width * 0.514 - (width / 20 *(num)),(height * 0.11) + height * 0.02 * fibonacci(num++), width * 0.035 + fibonacci(num))
+  if( diff > -35)fill(210,34,34)//Rot
+  ellipse(width * 0.514 - (width / 20 *(num)),(height * 0.11) + height * 0.02 * fibonacci(num++), width * 0.035 + fibonacci(num))
+  if(diff <-40 && diff > -100)fill(210,34,34)//Rot
+  ellipse(width * 0.514 - (width / 20 *(num)),(height * 0.11) + height * 0.02 * fibonacci(num++), width * 0.035 + fibonacci(num))
 //rechte Rheie
+fill(217,217,217);
 
-ellipse(width * 0.486 + 40*(--num),(height * 0.11) + height * 0.02 * fibonacci(num), width * 0.035 + fibonacci(num+1))
-ellipse(width * 0.486 + 40*(--num),(height * 0.11) + height * 0.02 * fibonacci(num), width * 0.035 + fibonacci(num+1))
-ellipse(width * 0.486 + 40*(--num),(height * 0.11) + height * 0.02 * fibonacci(num), width * 0.035 + fibonacci(num+1))
-ellipse(width * 0.486 + 40*(--num),(height * 0.11) + height * 0.02 * fibonacci(num), width * 0.035 + fibonacci(num+1))
-ellipse(width * 0.486 + 40*(--num),(height * 0.11) + height * 0.02 * fibonacci(num), width * 0.035 + fibonacci(num+1))
-ellipse(width * 0.486 + 40*(--num),(height * 0.11) + height * 0.02 * fibonacci(num), width * 0.035 + fibonacci(num+1))
-ellipse(width * 0.486 + 40*(--num),(height * 0.11) + height * 0.02 * fibonacci(num), width * 0.035 + fibonacci(num+1))
-ellipse(width * 0.486 + 40*(--num),(height * 0.11) + height * 0.02 * fibonacci(num), width * 0.035 + fibonacci(num+1))
-
+if( diff > 39 && diff < 100)fill(210,34,34)//Rot
+ellipse(width * 0.486 + (width / 20 *(--num)),(height * 0.11) + height * 0.02 * fibonacci(num), width * 0.035 + fibonacci(num+1))
+if( diff > 35)fill(210,34,34)//Rot
+ellipse(width * 0.486 + (width / 20 *(--num)),(height * 0.11) + height * 0.02 * fibonacci(num), width * 0.035 + fibonacci(num+1))
+if( diff > 30)fill(210,34,34)//Rot
+ellipse(width * 0.486 + (width / 20 *(--num)),(height * 0.11) + height * 0.02 * fibonacci(num), width * 0.035 + fibonacci(num+1))
+if( diff > 25)fill(255,190,0)//Gelb
+ellipse(width * 0.486 + (width / 20 *(--num)),(height * 0.11) + height * 0.02 * fibonacci(num), width * 0.035 + fibonacci(num+1))
+if( diff > 20)fill(255,190,0)//Gelb
+ellipse(width * 0.486 + (width / 20 *(--num)),(height * 0.11) + height * 0.02 * fibonacci(num), width * 0.035 + fibonacci(num+1))
+if( diff > 15)fill(255,190,0)//Gelb
+ellipse(width * 0.486 + (width / 20 *(--num)),(height * 0.11) + height * 0.02 * fibonacci(num), width * 0.035 + fibonacci(num+1))
+if( diff > 10)fill(35,135,36)//grün
+ellipse(width * 0.486 + (width / 20 *(--num)),(height * 0.11) + height * 0.02 * fibonacci(num), width * 0.035 + fibonacci(num+1))
+if( diff >= 5)fill(35,135,36)//grün
+ellipse(width * 0.486 + (width / 20 *(--num)),(height * 0.11) + height * 0.02 * fibonacci(num), width * 0.035 + fibonacci(num+1))
+//console.log(diff)
   tune();
   if (autoCorrelateValue === -1) {
     colorText=color(217,217,217)
     note = "--";
+    diff = -999
     return;
   }
   change_ref(parseInt(ref.value()));
@@ -119,6 +151,7 @@ function tune() {
   if (autoCorrelateValue === -1) {
     colorText=color(217,217,217)
     note = "--";
+    diff = -999
     return;
   }
   function noteIsSimilarEnough() {
@@ -145,30 +178,24 @@ function tune() {
     smoothingCount = 0;
     return;
   }
-  note = noteFromPitch(valueToDisplay);
-  if (typeof valueToDisplay == "number") {
-    valueToDisplay += " Hz";
-  }
+  note = noteFromPitch(valueToDisplay).note  ;
+  diff = noteFromPitch(valueToDisplay).cents
 }
 function noteFromPitch(freq) {
-  let noteNum = 12 * (Math.log(freq / a4) / Math.log(2));
-  let noteStrings = [
-    "C",
-    "C#",
-    "D",
-    "D#",
-    "E",
-    "F",
-    "F#",
-    "G",
-    "G#",
-    "A",
-    "A#",
-    "H",
-  ];
-  note = noteStrings[(Math.round(noteNum) + 69) % 12];
-  return note;
+  // Danke an  PitchDetect: https://github.com/cwilso/PitchDetect/blob/master/js/pitchdetect.js
+var noteStrings = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "H"];
+ 
+var noteNum = 12 * (Math.log(freq / a4) / Math.log(2));
+  var noteIndex = Math.round(noteNum) + 69;
+  var note = noteStrings[noteIndex % 12];
+  var centsDiff = Math.floor(1200 * Math.log2(freq / (a4 * Math.pow(2, (noteIndex - 69) / 12))));
+
+  return {
+    note: note,
+    cents: centsDiff
+  };
 }
+
 
 function autoCorrelate(buf, sampleRate) {
   let SIZE = buf.length;

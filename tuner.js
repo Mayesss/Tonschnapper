@@ -1,31 +1,41 @@
-/*
-The MIT License (MIT)
-Copyright (c) 2014 Chris Wilson
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+let cnv;
+let analyser, audioContext;
+let autoCorrelateValue = -1;
+let note = "";
+let previousValueToDisplay = 0;
+let smoothingCount = 0;
+let smoothingThreshold = 5;
+let smoothingCountThreshold = 5;
+let a4 = 440;
+let buf = new Float32Array(1024);
+let MIN_SAMPLES = 0;
+let GOOD_ENOUGH_CORRELATION = 0.9;
+let colorText 
+let colorTriangle
+let cnvWidth = 0
+let cnvHeight = 0
+let cnvRtaio = 3
+let diff = -999
+var tunerSketch = function(p) {
 
-Note: autoCorrelate comes from https://github.com/cwilso/PitchDetect/pull/23
-with the above license.
-
-*/
-
-function init() {
-  var source;
-  var audioContext = new (window.AudioContext || window.webkitAudioContext)();
-  var analyser = audioContext.createAnalyser();
+ p.setup = function() {
+  
+  if(p.windowWidth > p.windowHeight){
+  cnvWidth = p.windowWidth * 0.98
+  cnvHeight = cnvWidth / cnvRtaio
+  }
+  else{
+  cnvWidth = p.windowWidth *0.98
+  cnvHeight = p.windowWidth / cnvRtaio
+  }
+  cnv = p.createCanvas(cnvWidth, cnvHeight);
+  let x = (p.windowWidth - p.width) / 2;
+  let y = 50;
+  cnv.position(x, y);
+  parametres(p);
+  let source;
+  audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  analyser = audioContext.createAnalyser();
   analyser.minDecibels = -100;
   analyser.maxDecibels = -10;
   analyser.smoothingTimeConstant = 0.85;
@@ -34,7 +44,7 @@ function init() {
     alert("Sorry, getUserMedia is required for the app.");
     return;
   } else {
-    var constraints = { audio: true };
+    let constraints = { audio: true };
     navigator.mediaDevices
       .getUserMedia(constraints)
       .then(function (stream) {
@@ -42,274 +52,244 @@ function init() {
         source = audioContext.createMediaStreamSource(stream);
         // Connect the source node to the analyzer
         source.connect(analyser);
-        visualize();
+        tune(p);
       })
       .catch(function (err) {
         alert("err mic " + err);
       });
   }
+}
 
-  // Visualizing, copied from voice change o matic
-  var canvas = document.querySelector(".draw");
-  var canvasContext = canvas.getContext("2d");
-  var WIDTH;
-  var HEIGHT;
+ p.draw = function (){
+  p.background(255, 255, 255);
+  button = p.createButton('<i class="fa-solid fa-microphone">');
+  button.position(p.width / 2 - 20, p.height + 45 );
+  button.class("round-button")
+  button.mousePressed(p.setup);
 
-  function visualize() {
-    WIDTH = canvas.width;
-    HEIGHT = canvas.height;
+   if(note == "--")colorText = p.color(217,217,217)
+   else colorText = p.color(0,0,0)
+   colorTriangle = p.color(217,217,217)
+  p.noStroke()
+  
+  p.fill(colorText);
+  p.textFont('Inter bolds');
+  p.textSize(p.width * 0.20);
+  p.text(note, p.width * 0.435, p.height * 0.72);
+  p.fill(217,217,217);
 
-    var drawVisual;
-    var drawNoteVisual;
-
-    var draw = function () {
-      drawVisual = requestAnimationFrame(draw);
-      analyser.fftSize = 2048;
-      var bufferLength = analyser.fftSize;
-      var dataArray = new Uint8Array(bufferLength);
-      analyser.getByteTimeDomainData(dataArray);
-
-      canvasContext.fillStyle = "rgb(200, 200, 200)";
-      canvasContext.fillRect(0, 0, WIDTH, HEIGHT);
-
-      canvasContext.lineWidth = 2;
-      canvasContext.strokeStyle = "rgb(0, 0, 0)";
-
-      canvasContext.beginPath();
-
-      var sliceWidth = (WIDTH * 1.0) / bufferLength;
-      var x = 0;
-
-      for (var i = 0; i < bufferLength; i++) {
-        var v = dataArray[i] / 128.0;
-        var y = (v * HEIGHT) / 2;
-
-        if (i === 0) {
-          canvasContext.moveTo(x, y);
-        } else {
-          canvasContext.lineTo(x, y);
-        }
-
-        x += sliceWidth;
-      }
-
-      canvasContext.lineTo(canvas.width, canvas.height / 2);
-      canvasContext.stroke();
-    };
-
-    var previousValueToDisplay = 0;
-    var smoothingCount = 0;
-    var smoothingThreshold = 5;
-    var smoothingCountThreshold = 5;
-
-    // Thanks to PitchDetect: https://github.com/cwilso/PitchDetect/blob/master/js/pitchdetect.js
-    var noteStrings = [
-      "C",
-      "C#",
-      "D",
-      "D#",
-      "E",
-      "F",
-      "F#",
-      "G",
-      "G#",
-      "A",
-      "A#",
-      "B",
-    ];
-    function noteFromPitch(frequency) {
-      var noteNum = 12 * (Math.log(frequency / 440) / Math.log(2));
-      return Math.round(noteNum) + 69;
-    }
-
-    var drawNote = function () {
-      drawNoteVisual = requestAnimationFrame(drawNote);
-      var bufferLength = analyser.fftSize;
-      var buffer = new Float32Array(bufferLength);
-      analyser.getFloatTimeDomainData(buffer);
-      var autoCorrelateValue = autoCorrelate(buffer, audioContext.sampleRate);
-
-      // Handle rounding
-      var valueToDisplay = autoCorrelateValue;
-      var roundingValue = document.querySelector(
-        'input[name="rounding"]:checked'
-      ).value;
-      if (roundingValue == "none") {
-        // Do nothing
-      } else if (roundingValue == "hz") {
-        valueToDisplay = Math.round(valueToDisplay);
-      } else {
-        // Get the closest note
-        // Thanks to PitchDetect:
-        valueToDisplay = noteStrings[noteFromPitch(autoCorrelateValue) % 12];
-      }
-
-      var smoothingValue = document.querySelector(
-        'input[name="smoothing"]:checked'
-      ).value;
-
-      if (autoCorrelateValue === -1) {
-        document.getElementById("note").innerText = "Too quiet...";
-        return;
-      }
-      if (smoothingValue === "none") {
-        smoothingThreshold = 99999;
-        smoothingCountThreshold = 0;
-      } else if (smoothingValue === "basic") {
-        smoothingThreshold = 10;
-        smoothingCountThreshold = 5;
-      } else if (smoothingValue === "very") {
-        smoothingThreshold = 5;
-        smoothingCountThreshold = 10;
-      }
-      function noteIsSimilarEnough() {
-        // Check threshold for number, or just difference for notes.
-        if (typeof valueToDisplay == "number") {
-          return (
-            Math.abs(valueToDisplay - previousValueToDisplay) <
-            smoothingThreshold
-          );
-        } else {
-          return valueToDisplay === previousValueToDisplay;
-        }
-      }
-      // Check if this value has been within the given range for n iterations
-      if (noteIsSimilarEnough()) {
-        if (smoothingCount < smoothingCountThreshold) {
-          smoothingCount++;
-          return;
-        } else {
-          previousValueToDisplay = valueToDisplay;
-          smoothingCount = 0;
-        }
-      } else {
-        previousValueToDisplay = valueToDisplay;
-        smoothingCount = 0;
-        return;
-      }
-      if (typeof valueToDisplay == "number") {
-        valueToDisplay += " Hz";
-      }
-
-      document.getElementById("note").innerText = valueToDisplay;
-    };
-
-    var drawFrequency = function () {
+  if(diff >= 0 )
+  p.fill(35,135,36)//grün
 
 
-      drawVisual = requestAnimationFrame(draw);
-      analyser.fftSize = 2048;
-      var bufferLength = analyser.fftSize;
-      var dataArray = new Uint8Array(bufferLength);
+//triange
+  let x1 = p.width * 0.46;
+  let y1 = p.height * 0.01;
+  let x2 = p.width * 0.54;
+  let y2 = p.height * 0.01;
+  let x3 = p.width * 0.5;
+  let y3 = p.height * 0.19;
+  p.triangle(x1, y1, x2, y2, x3, y3);
+ //linke Rheie
+ p.fill(217,217,217);
+let num = 1
+if( diff >= -5)p.fill(35,135,36)//grün
+  p.ellipse(p.width * 0.514 - (p.width / 20 *(num)),(p.height * 0.16) + p.height * 0.02 * fibonacci(num++), p.width * 0.035 + fibonacci(num))
+  if( diff >= -10)p.fill(35,135,36)//grün
+  p.ellipse(p.width * 0.514 - (p.width / 20 *(num)),(p.height * 0.16) + p.height * 0.02 * fibonacci(num++), p.width * 0.035 + fibonacci(num))
+  if(diff >= -15)p.fill(255,190,0)//Gelb
+  p.ellipse(p.width * 0.514 - (p.width / 20 *(num)),(p.height * 0.16) + p.height * 0.02 * fibonacci(num++), p.width * 0.035 + fibonacci(num))
+  if(diff >= -20)p.fill(255,190,0)//Gelb
+  p.ellipse(p.width * 0.514 - (p.width / 20 *(num)),(p.height * 0.16) + p.height * 0.02 * fibonacci(num++), p.width * 0.035 + fibonacci(num))
+  if( diff >= -25)p.fill(255,190,0)//Gelb
+  p.ellipse(p.width * 0.514 - (p.width / 20 *(num)),(p.height * 0.16) + p.height * 0.02 * fibonacci(num++), p.width * 0.035 + fibonacci(num))
+  if( diff >= -30)p.fill(210,34,34)//Rot
+  p.ellipse(p.width * 0.514 - (p.width / 20 *(num)),(p.height * 0.16) + p.height * 0.02 * fibonacci(num++), p.width * 0.035 + fibonacci(num))
+  if( diff >= -35)p.fill(210,34,34)//Rot
+  p.ellipse(p.width * 0.514 - (p.width / 20 *(num)),(p.height * 0.16) + p.height * 0.02 * fibonacci(num++), p.width * 0.035 + fibonacci(num))
+  if(diff <= -40 && diff > -50)p.fill(210,34,34)//Rot
+  p.ellipse(p.width * 0.514 - (p.width / 20 *(num)),(p.height * 0.16) + p.height * 0.02 * fibonacci(num++), p.width * 0.035 + fibonacci(num))
+//rechte Rheie
+p.fill(217,217,217);
 
-      analyser.getByteTimeDomainData(dataArray);
-      const barWidth = (WIDTH / bufferLength) * 2.5;
-     let barHeight;
-    let x = 0;
-      for (let i = 0; i < bufferLength; i++) {
-        barHeight = dataArray[i] / 2;
-    
-        canvasContext.fillStyle = `rgb(${barHeight + 100}, 50, 50)`;
-        canvasContext.fillRect(x, HEIGHT - barHeight / 2, barWidth, barHeight);
-    
-        x += barWidth + 1;
-      }
-    }
- 
+if( diff >= 40 && diff < 50)p.fill(210,34,34)//Rot
+p.ellipse(p.width * 0.486 + (p.width / 20 *(--num)),(p.height * 0.16) + p.height * 0.02 * fibonacci(num), p.width * 0.035 + fibonacci(num+1))
+if( diff >= 35)p.fill(210,34,34)//Rot
+p.ellipse(p.width * 0.486 + (p.width / 20 *(--num)),(p.height * 0.16) + p.height * 0.02 * fibonacci(num), p.width * 0.035 + fibonacci(num+1))
+if( diff >= 30)p.fill(210,34,34)//Rot
+p.ellipse(p.width * 0.486 + (p.width / 20 *(--num)),(p.height * 0.16) + p.height * 0.02 * fibonacci(num), p.width * 0.035 + fibonacci(num+1))
+if( diff >= 25)p.fill(255,190,0)//Gelb
+p.ellipse(p.width * 0.486 + (p.width / 20 *(--num)),(p.height * 0.16) + p.height * 0.02 * fibonacci(num), p.width * 0.035 + fibonacci(num+1))
+if( diff >= 20)p.fill(255,190,0)//Gelb
+p.ellipse(p.width * 0.486 + (p.width / 20 *(--num)),(p.height * 0.16) + p.height * 0.02 * fibonacci(num), p.width * 0.035 + fibonacci(num+1))
+if( diff >= 15)p.fill(255,190,0)//Gelb
+p.ellipse(p.width * 0.486 + (p.width / 20 *(--num)),(p.height * 0.16) + p.height * 0.02 * fibonacci(num), p.width * 0.035 + fibonacci(num+1))
+if( diff >= 10)p.fill(35,135,36)//grün
+p.ellipse(p.width * 0.486 + (p.width / 20 *(--num)),(p.height * 0.16) + p.height * 0.02 * fibonacci(num), p.width * 0.035 + fibonacci(num+1))
+if( diff >= 5)p.fill(35,135,36)//grün
+p.ellipse(p.width * 0.486 + (p.width / 20 *(--num)),(p.height * 0.16) + p.height * 0.02 * fibonacci(num), p.width * 0.035 + fibonacci(num+1))
+//console.log(diff)
+  tune(p);
+  if (autoCorrelateValue === -1) {
+    colorText=p.color(217,217,217)
+    note = "--";
+    diff = -999
+    return;
+  }
+}
 
-    var displayValue = document.querySelector(
-      'input[name="display"]:checked'
-    ).value;
-    if (displayValue == "sine") {
-      draw();
+function tune() {
+  a4=parseInt(ref.value())
+  drawNoteVisual = requestAnimationFrame(tune);
+  let bufferLength = analyser.fftSize;
+  let buffer = new Float32Array(bufferLength);
+  analyser.getFloatTimeDomainData(buffer);
+  let autoCorrelateValue = autoCorrelate(buffer, audioContext.sampleRate);
+  // Handle rounding
+  let valueToDisplay = autoCorrelateValue;
+  let smoothingThreshold = 5;
+  if (autoCorrelateValue === -1) {
+    colorText=p.color(217,217,217)
+    note = "--";
+    diff = -999
+    return;
+  }
+  function noteIsSimilarEnough() {
+    // Check threshold for number, or just difference for notes.
+    if (typeof valueToDisplay == "number") {
+      return (
+        Math.abs(valueToDisplay - previousValueToDisplay) < smoothingThreshold
+      );
     } else {
-      drawFrequency();
+      return valueToDisplay === previousValueToDisplay;
     }
-    drawNote();
   }
+  // Check if this value has been within the given range for n iterations
+  if (noteIsSimilarEnough()) {
+    if (smoothingCount < smoothingCountThreshold) {
+      smoothingCount++;
+      return;
+    } else {
+      previousValueToDisplay = valueToDisplay;
+      smoothingCount = 0;
+    }
+  } else {
+    previousValueToDisplay = valueToDisplay;
+    smoothingCount = 0;
+    return;
+  }
+  note = noteFromPitch(valueToDisplay).note  ;
+  diff = noteFromPitch(valueToDisplay).cents
+}
+function noteFromPitch(freq) {
+  // Danke an  PitchDetect: https://github.com/cwilso/PitchDetect/blob/master/js/pitchdetect.js
+var noteStrings = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "H"];
+ 
+var noteNum = 12 * (Math.log(freq / a4) / Math.log(2));
+  var noteIndex = Math.round(noteNum) + 69;
+  var note = noteStrings[noteIndex % 12];
+  var centsDiff = Math.floor(1200 * Math.log2(freq / (a4 * Math.pow(2, (noteIndex - 69) / 12))));
+
+  return {
+    note: note,
+    cents: centsDiff
+  };
 }
 
-// Must be called on analyser.getFloatTimeDomainData and audioContext.sampleRate
-// From https://github.com/cwilso/PitchDetect/pull/23
-function autoCorrelate(buffer, sampleRate) {
-  // Perform a quick root-mean-square to see if we have enough signal
-  var SIZE = buffer.length;
-  var sumOfSquares = 0;
-  for (var i = 0; i < SIZE; i++) {
-    var val = buffer[i];
-    sumOfSquares += val * val;
-  }
-  var rootMeanSquare = Math.sqrt(sumOfSquares / SIZE);
-  if (rootMeanSquare < 0.01) {
-    return -1;
-  }
 
-  // Find a range in the buffer where the values are below a given threshold.
-  var r1 = 0;
-  var r2 = SIZE - 1;
-  var threshold = 0.2;
-
-  // Walk up for r1
-  for (var i = 0; i < SIZE / 2; i++) {
-    if (Math.abs(buffer[i]) < threshold) {
-      r1 = i;
-      break;
-    }
-  }
-
-  // Walk down for r2
-  for (var i = 1; i < SIZE / 2; i++) {
-    if (Math.abs(buffer[SIZE - i]) < threshold) {
-      r2 = SIZE - i;
-      break;
-    }
-  }
-
-  // Trim the buffer to these ranges and update SIZE.
-  buffer = buffer.slice(r1, r2);
-  SIZE = buffer.length;
-
-  // Create a new array of the sums of offsets to do the autocorrelation
-  var c = new Array(SIZE).fill(0);
-  // For each potential offset, calculate the sum of each buffer value times its offset value
+function autoCorrelate(buf, sampleRate) {
+  let SIZE = buf.length;
+  let MAX_SAMPLES = Math.floor(SIZE / 2);
+  let best_offset = -1;
+  let best_correlation = 0;
+  let rms = 0;
+  let foundGoodCorrelation = false;
+  let correlations = new Array(MAX_SAMPLES);
   for (let i = 0; i < SIZE; i++) {
-    for (let j = 0; j < SIZE - i; j++) {
-      c[i] = c[i] + buffer[j] * buffer[j + i];
+    let val = buf[i];
+    rms += val * val;
+  }
+  rms = Math.sqrt(rms / SIZE);
+  if (rms < 0.01)
+    // not enough signal
+    return -1;
+
+  let lastCorrelation = 1;
+  for (let offset = MIN_SAMPLES; offset < MAX_SAMPLES; offset++) {
+    let correlation = 0;
+
+    for (let i = 0; i < MAX_SAMPLES; i++) {
+      correlation += Math.abs(buf[i] - buf[i + offset]);
     }
-  }
+    correlation = 1 - correlation / MAX_SAMPLES;
+    correlations[offset] = correlation; // store it, for the tweaking we need to do below.
+    if (
+      correlation > GOOD_ENOUGH_CORRELATION &&
+      correlation > lastCorrelation
+    ) {
+      foundGoodCorrelation = true;
+      if (correlation > best_correlation) {
+        best_correlation = correlation;
+        best_offset = offset;
+      }
+    } else if (foundGoodCorrelation) {
+      // short-circuit - we found a good correlation, then a bad one, so we'd just be seeing copies from here.
+      // Now we need to tweak the offset - by interpolating between the values to the left and right of the
+      // best offset, and shifting it a bit.  This is complex, and HACKY in this code (happy to take PRs!) -
+      // we need to do a curve fit on correlations[] around best_offset in order to better determine precise
+      // (anti-aliased) offset.
 
-  // Find the last index where that value is greater than the next one (the dip)
-  var d = 0;
-  while (c[d] > c[d + 1]) {
-    d++;
-  }
-
-  // Iterate from that index through the end and find the maximum sum
-  var maxValue = -1;
-  var maxIndex = -1;
-  for (var i = d; i < SIZE; i++) {
-    if (c[i] > maxValue) {
-      maxValue = c[i];
-      maxIndex = i;
+      // we know best_offset >=1,
+      // since foundGoodCorrelation cannot go to true until the second pass (offset=1), and
+      // we can't drop into this clause until the following pass (else if).
+      let shift =
+        (correlations[best_offset + 1] - correlations[best_offset - 1]) /
+        correlations[best_offset];
+      return sampleRate / (best_offset + 8 * shift);
     }
+    lastCorrelation = correlation;
+  }
+  if (best_correlation > 0.01) {
+    // console.log("f = " + sampleRate/best_offset + "Hz (rms: " + rms + " confidence: " + best_correlation + ")")
+    return sampleRate / best_offset;
   }
 
-  var T0 = maxIndex;
-
-  // Not as sure about this part, don't @ me
-  // From the original author:
-  // interpolation is parabolic interpolation. It helps with precision. We suppose that a parabola pass through the
-  // three points that comprise the peak. 'a' and 'b' are the unknowns from the linear equation system and b/(2a) is
-  // the "error" in the abscissa. Well x1,x2,x3 should be y1,y2,y3 because they are the ordinates.
-  var x1 = c[T0 - 1];
-  var x2 = c[T0];
-  var x3 = c[T0 + 1];
-
-  var a = (x1 + x3 - 2 * x2) / 2;
-  var b = (x3 - x1) / 2;
-  if (a) {
-    T0 = T0 - b / (2 * a);
-  }
-
-  return sampleRate / T0;
+  return -1;
+  //	let best_frequency = sampleRate/best_offset;
 }
+
+function change_ref(v) {
+  if (v <= 480 && v >= 410) {
+    a4 = v;
+  }
+}
+
+function parametres(p) {
+
+    ref = p.createInput("", "number");
+    ref.position(cnvWidth / 2 - 200,cnvHeight+60);
+    ref.value(a4);
+    greeting = p.createElement('paragraph', 'A4 = ');
+    greeting.position(cnvWidth / 2 - 240,cnvHeight+62);
+    unity = p.createElement('paragraph', 'Hz ');
+    unity.position(cnvWidth / 2 - 145,cnvHeight+62);
+    ref.parent("#ref");
+    ref.addClass("form-control");
+    ref.style("p.width: 5em;");
+    ref.attribute("min", "410");
+    ref.attribute("max", "480");
+    ref.attribute("p.width", "15px")
+    ref.attribute("required");
+    //ref.mouseOut(change_ref(parseInt(ref.value())));
+  
+}
+function fibonacci(n) {
+  if (n === 0) return 0;
+  if (n === 1) return 1;
+  // recursioin base
+  return fibonacci(n - 2) + fibonacci(n - 1);
+}
+}
+
+
+

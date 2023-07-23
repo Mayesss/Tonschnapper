@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+
+    <script
+      src="https://kit.fontawesome.com/741fddf1e8.js"
+      crossorigin="anonymous"
+    ></script>
+  </head>
+  <body>
+    <ul class="switch-menu">
+      <li
+        class="switch-option active"
+        id="tunerLi"
+        onclick="runSketch(tunerSketch);"
+      >
+        Stimmer
+      </li>
+      <li
+        class="switch-option"
+        id="tunerSpek"
+        onclick="runSketch(spectrumSketch);"
+      >
+        Spektrum
+      </li>
+    </ul>
+
+    <div id="ref"></div>
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.7.0/lib/p5.js"></script>
+    <script src="./lib/grafica.js"></script>
+    <script src="tuner.js"></script>
+    <script src="spectrum.js"></script>
+    <script>
+      // sketch launcher
+      var p5Sketch;
+
+      function runSketch(sketch) {
+        if (typeof p5Sketch !== "undefined") {
+          p5Sketch.remove();
+        }
+        p5Sketch = new p5(sketch, "ref");
+
+        // Remove the active class from all options
+        var allOptions = document.getElementsByClassName("switch-option");
+        for (var j = 0; j < allOptions.length; j++) {
+          allOptions[j].classList.remove("active");
+        }
+
+        // Add the active class to the clicked option
+        event.currentTarget.classList.add("active");
+      }
+
+      // Simulate click on pageload
+      document.addEventListener("DOMContentLoaded", function () {
+        document.getElementById("tunerLi").click();
+      });
+    </script>
+  </body>
+</html>
+<style>
+  .round-button {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background-color: #f1f1f1;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .round-button i {
+    color: #333;
+    font-size: 24px;
+  }
+  .switch-menu {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    background-color: #f1f1f1;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+  }
+
+  .switch-option {
+    padding: 10px 20px;
+    cursor: pointer;
+  }
+
+  .switch-option.active {
+    background-color: #ddd;
+  }
+
+  .switch-menu {
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+
+  .switch-option {
+    margin: 5px;
+    background-color: #f1f1f1;
+    border: none;
+    border-radius: 50px;
+    padding: 8px 15px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+
+  .switch-option.active {
+    background-color: #ddd;
+  }
+</style>

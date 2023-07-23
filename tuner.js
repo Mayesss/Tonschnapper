@@ -20,17 +20,11 @@ var tunerSketch = function(p) {
 
  p.setup = function() {
   
-  if(p.windowWidth > p.windowHeight){
   cnvWidth = p.windowWidth * 0.98
   cnvHeight = cnvWidth / cnvRtaio
-  }
-  else{
-  cnvWidth = p.windowWidth *0.98
-  cnvHeight = p.windowWidth / cnvRtaio
-  }
   cnv = p.createCanvas(cnvWidth, cnvHeight);
   let x = (p.windowWidth - p.width) / 2;
-  let y = 50;
+  let y = 70;
   cnv.position(x, y);
   parametres(p);
   let source;
@@ -62,10 +56,12 @@ var tunerSketch = function(p) {
 
  p.draw = function (){
   p.background(255, 255, 255);
-  button = p.createButton('<i class="fa-solid fa-microphone">');
-  button.position(p.width / 2 - 20, p.height + 45 );
-  button.class("round-button")
-  button.mousePressed(p.setup);
+  micButton = p.createButton('<i class="fa-solid fa-microphone">');
+  micButton.position(p.width / 2 - 20, p.height + 45 );
+  micButton.class("round-button")
+  micButton.mousePressed(p.setup);
+
+
 
    if(note == "--")colorText = p.color(217,217,217)
    else colorText = p.color(0,0,0)
@@ -178,6 +174,7 @@ function tune() {
     smoothingCount = 0;
     return;
   }
+  
   note = noteFromPitch(valueToDisplay).note  ;
   diff = noteFromPitch(valueToDisplay).cents
 }
